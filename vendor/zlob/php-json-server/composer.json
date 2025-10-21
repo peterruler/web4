@@ -1,0 +1,32 @@
+{
+  "name": "zlob/php-json-server",
+  "type": "library",
+  "description": "simple REST API json server",
+  "keywords": ["json", "server", "REST API", "RESTful API"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Makin Vladislav",
+      "email": "vamakin@gmail.com",
+      "homepage": "https://github.com/Zlob",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.9",
+    "nikic/php-parser": "~1.0",
+    "doctrine/inflector": "^1.0",
+    "symfony/http-foundation": "2.7.*",
+    "symfony/console": "2.7.*",
+    "fzaninotto/faker": "1.5.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4.0",
+    "codeclimate/php-test-reporter": "~0.1.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "JsonServer\\": "src/"
+    }
+  }
+}

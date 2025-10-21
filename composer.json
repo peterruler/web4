@@ -1,0 +1,5 @@
+{
+    "require": {
+        "zlob/php-json-server": "^1.1"
+    }
+}
