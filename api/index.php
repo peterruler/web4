@@ -18,41 +18,37 @@ $isDebug = filter_var(
         ?? false,
     FILTER_VALIDATE_BOOLEAN
 );
-
+// $isDebug = 1;
 error_reporting($isDebug ? E_ALL : E_ALL & ~E_DEPRECATED);
 ini_set('display_errors', $isDebug ? '1' : '0');
 ini_set('display_startup_errors', $isDebug ? '1' : '0');
 
-$requestMethod = $_SERVER['REQUEST_METHOD'] ?? '';
-$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowCredentials = filter_var(
-    $_ENV['API_ALLOW_CREDENTIALS']
-        ?? getenv('API_ALLOW_CREDENTIALS')
-        ?? false,
-    FILTER_VALIDATE_BOOLEAN
-);
-
-if ($requestOrigin !== '') {
-    header('Access-Control-Allow-Origin: ' . $requestOrigin);
-    header('Vary: Origin');
-} else {
-    header('Access-Control-Allow-Origin: *');
-}
-
-header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-// header('Access-Control-Max-Age: 600');
-if ($allowCredentials) {
-    header('Access-Control-Allow-Credentials: true');
-}
+// header('Access-Control-Allow-Credentials: true');
 
-if ($requestMethod === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
 $request = Request::createFromGlobals();
 $method = $request->getMethod();
+
+if ($method === Request::METHOD_POST) {
+    $override = $request->headers->get('X-HTTP-Method-Override')
+        ?? $request->request->get('_method')
+        ?? $request->query->get('_method');
+
+    if (is_string($override)) {
+        $override = strtoupper(trim($override));
+        $allowedOverrides = [Request::METHOD_PUT, Request::METHOD_PATCH, Request::METHOD_DELETE];
+        if (in_array($override, $allowedOverrides, true)) {
+            $method = $override;
+        }
+    }
+}
 
 $path = trim($request->getPathInfo(), '/');
 
@@ -139,19 +135,7 @@ try {
     $response = new JsonResponse($payload, Response::HTTP_INTERNAL_SERVER_ERROR);
 }
 
-$exposedHeaders = [
-    'Access-Control-Allow-Origin' => $requestOrigin !== '' ? $requestOrigin : '*',
-    'Access-Control-Allow-Headers' => '*',
-    'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-];
-if ($requestOrigin !== '') {
-    $exposedHeaders['Vary'] = 'Origin';
-}
-if ($allowCredentials) {
-    $exposedHeaders['Access-Control-Allow-Credentials'] = 'true';
-}
-
-foreach ($exposedHeaders as $header => $value) {
+foreach (['Access-Control-Allow-Origin' => '*', 'Access-Control-Allow-Headers' => 'Content-Type, Authorization', 'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS'] as $header => $value) {
     $response->headers->set($header, $value);
 }
 
