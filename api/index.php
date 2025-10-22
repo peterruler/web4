@@ -23,18 +23,30 @@ error_reporting($isDebug ? E_ALL : E_ALL & ~E_DEPRECATED);
 ini_set('display_errors', $isDebug ? '1' : '0');
 ini_set('display_startup_errors', $isDebug ? '1' : '0');
 
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigin = 'https://reactjs-todoapp-xi.vercel.app';
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? '';
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowCredentials = filter_var(
+    $_ENV['API_ALLOW_CREDENTIALS']
+        ?? getenv('API_ALLOW_CREDENTIALS')
+        ?? false,
+    FILTER_VALIDATE_BOOLEAN
+);
 
-if ($origin === $allowedOrigin) {
-    header("Access-Control-Allow-Origin: $allowedOrigin");
+if ($requestOrigin !== '') {
+    header('Access-Control-Allow-Origin: ' . $requestOrigin);
     header('Vary: Origin');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    // header('Access-Control-Allow-Credentials: true');
+} else {
+    header('Access-Control-Allow-Origin: *');
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+// header('Access-Control-Max-Age: 600');
+if ($allowCredentials) {
+    header('Access-Control-Allow-Credentials: true');
+}
+
+if ($requestMethod === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
@@ -125,6 +137,22 @@ try {
         $payload['detail'] = $exception->getMessage();
     }
     $response = new JsonResponse($payload, Response::HTTP_INTERNAL_SERVER_ERROR);
+}
+
+$exposedHeaders = [
+    'Access-Control-Allow-Origin' => $requestOrigin !== '' ? $requestOrigin : '*',
+    'Access-Control-Allow-Headers' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+];
+if ($requestOrigin !== '') {
+    $exposedHeaders['Vary'] = 'Origin';
+}
+if ($allowCredentials) {
+    $exposedHeaders['Access-Control-Allow-Credentials'] = 'true';
+}
+
+foreach ($exposedHeaders as $header => $value) {
+    $response->headers->set($header, $value);
 }
 
 if ($method === Request::METHOD_HEAD) {

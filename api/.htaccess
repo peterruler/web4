@@ -1,36 +1,10 @@
-# RewriteEngine On
-# RewriteCond %{REQUEST_FILENAME} !-f
-# RewriteRule ^ index.php [QSA,L]
+RewriteEngine On
 
-# --- CORS (allow your React app origin) ---
 <IfModule mod_headers.c>
-  # Whitelist one or more origins (add more SetEnvIfNoCase lines as needed)
-  SetEnvIfNoCase Origin "^https://reactjs-todoapp-xi\.vercel\.app$" ORIGIN_OK=1
-  # Optional for local dev:
-  # SetEnvIfNoCase Origin "^http://localhost:3000$" ORIGIN_OK=1
-
-  # Echo back the requesting Origin only if it's allowed
-  Header always set Access-Control-Allow-Origin "%{Origin}e" env=ORIGIN_OK
-  Header always set Vary "Origin"
-
-  # Allowed methods/headers
+  Header always set Access-Control-Allow-Origin "*"
+  Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
   Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-  Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-
-  # If you need cookies/sessions across origins, uncomment this AND use credentials:'include' on the client
-  # Header always set Access-Control-Allow-Credentials "true"
 </IfModule>
 
-# --- Routing / Rewrites ---
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-
-  # 1) Short-circuit CORS preflight (respond 204 before hitting PHP)
-  RewriteCond %{REQUEST_METHOD} =OPTIONS
-  RewriteRule ^ - [R=204,L]
-
-  # 2) Your existing SPA/API front controller rule(s)
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^ index.php [QSA,L]
-</IfModule>
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
